@@ -1,5 +1,5 @@
 #!/bin/bash
-set -exuo pipefail
+set -euo pipefail
 
 # Dumps details about the instance running the CI job.
 
@@ -245,8 +245,10 @@ build_image() {
 
         # Is the compose finished?
         if [[ $COMPOSE_STATUS != RUNNING ]] && [[ $COMPOSE_STATUS != WAITING ]]; then
+	    echo ; greenprint "🚀 Finished compose"
             break
         fi
+	echo -n "."
 
         # Wait 30 seconds and try again.
         sleep 5
