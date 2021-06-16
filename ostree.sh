@@ -284,8 +284,8 @@ clean_up () {
     greenprint "🧼 Cleaning up"
     sudo virsh destroy "${IMAGE_KEY}"
     sudo virsh undefine "${IMAGE_KEY}" --nvram
-    # Remove qcow2 file.
-    sudo sudo virsh vol-delete --pool images "${IMAGE_KEY}.qcow2"
+    # Don't remove qcow2 file, so it can be used later
+    #sudo sudo virsh vol-delete --pool images "${IMAGE_KEY}.qcow2"
     # Remove extracted upgrade image-tar.
     sudo rm -rf "$UPGRADE_PATH"
     # Remove "remote" repo.
@@ -524,5 +524,7 @@ check_result
 
 # Final success clean up
 clean_up
+
+greenprint "Here is the resulted VM: $LIBVIRT_IMAGE_PATH"
 
 exit 0
