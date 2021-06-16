@@ -27,12 +27,6 @@ CI MACHINE SPECS
 EOF
 echo -e "\033[0m"
 
-# CentOS Stream Workaround
-if grep -r CentOS /etc/redhat-release; then
-    sudo cp files/rhel-8-4-0-os-release /etc/os-release
-    sudo cp files/rhel-8-4-0-rh-release /etc/redhat-release
-fi
-
 # Get OS data.
 source /etc/os-release
 
@@ -46,26 +40,23 @@ sudo mkdir -p /etc/osbuild-composer/repositories
 
 # Set os-variant and boot location used by virt-install.
 case "${ID}-${VERSION_ID}" in
-    "rhel-8.3")
-        IMAGE_TYPE=rhel-edge-commit
-        OSTREE_REF="rhel/8/${ARCH}/edge"
-        OS_VARIANT="rhel8.3"
-        BOOT_LOCATION="http://download-node-02.eng.bos.redhat.com/rhel-8/rel-eng/updates/RHEL-8/latest-RHEL-8.3.1/compose/BaseOS/x86_64/os/"
-        CUT_DIRS=9
-        sudo cp files/rhel-8-3-1.json /etc/osbuild-composer/repositories/rhel-8.json;;
     "rhel-8.4")
         IMAGE_TYPE=rhel-edge-commit
         OSTREE_REF="rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
-        # Apply CentOS Stream Workarounds
-        #BOOT_LOCATION="http://download-node-02.eng.bos.redhat.com/rhel-8/rel-eng/RHEL-8/latest-RHEL-8.4.0/compose/BaseOS/x86_64/os/"
-        BOOT_LOCATION="http://mirror.centos.org/centos/8-stream/BaseOS/x86_64/os/"
-        #CUT_DIRS=8
-        CUT_DIRS=5
-        #sudo cp files/rhel-8-4-0.json /etc/osbuild-composer/repositories/rhel-8-beta.json
-        #sudo ln -sf /etc/osbuild-composer/repositories/rhel-8-beta.json /etc/osbuild-composer/repositories/rhel-8.json;;
+        BOOT_LOCATION="http://download-node-02.eng.bos.redhat.com/rhel-8/rel-eng/RHEL-8/latest-RHEL-8.4.0/compose/BaseOS/${ARCH}/os/"
+	;;
+    "centos-8")
+        IMAGE_TYPE=rhel-edge-commit
+        OSTREE_REF="centos/8/${ARCH}/edge"
+        OS_VARIANT="rhel8-unknown"
+        BOOT_LOCATION="http://mirror.centos.org/centos/8-stream/BaseOS/${ARCH}/os/"
+        # CentOS Stream Workaround
+        sudo cp files/rhel-8-4-0-os-release /etc/os-release
+        sudo cp files/rhel-8-4-0-rh-release /etc/redhat-release
         sudo cp /usr/share/osbuild-composer/repositories/centos-stream-8.json /etc/osbuild-composer/repositories/
-        sudo ln -sv /etc/osbuild-composer/repositories/centos-stream-8.json /etc/osbuild-composer/repositories/rhel-8.json;;
+        sudo ln -sfv /etc/osbuild-composer/repositories/centos-stream-8.json /etc/osbuild-composer/repositories/rhel-8.json
+	;;
     *)
         echo "unsupported distro: ${ID}-${VERSION_ID}"
         exit 1;;
@@ -113,11 +104,6 @@ sudo tee /tmp/integration.xml > /dev/null << EOF
       <host mac='34:49:22:B0:83:30' name='vm' ip='192.168.100.50'/>
     </dhcp>
   </ip>
-  <dnsmasq:options>
-    <dnsmasq:option value='dhcp-vendorclass=set:efi-http,HTTPClient:Arch:00016'/>
-    <dnsmasq:option value='dhcp-option-force=tag:efi-http,60,HTTPClient'/>
-    <dnsmasq:option value='dhcp-boot=tag:efi-http,&quot;http://192.168.100.1/httpboot/EFI/BOOT/BOOTX64.EFI&quot;'/>
-  </dnsmasq:options>
 </network>
 EOF
 if sudo virsh net-info integration > /dev/null 2>&1; then
@@ -151,31 +137,10 @@ GUEST_ADDRESS=192.168.100.50
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
 BLUEPRINT_FILE=${TEMPDIR}/blueprint.toml
-HTTPD_PATH="/var/www/html"
-KS_FILE=${HTTPD_PATH}/ks.cfg
+KS_FILE=${TEMPDIR}/ks.cfg
 COMPOSE_START=${TEMPDIR}/compose-start-${IMAGE_KEY}.json
 COMPOSE_INFO=${TEMPDIR}/compose-info-${IMAGE_KEY}.json
-GRUB_CFG=${HTTPD_PATH}/httpboot/EFI/BOOT/grub.cfg
-
-# Download HTTP boot required files
-greenprint "📥 Download HTTP boot required files"
-sudo mkdir "${HTTPD_PATH}/httpboot"
-REQUIRED_FOLDERS=( "EFI" "images" "isolinux" )
-for i in "${REQUIRED_FOLDERS[@]}"
-do
-    sudo wget -r --no-parent -nH --cut-dirs="$CUT_DIRS" --reject "index.html*" --reject "boot.iso" "${BOOT_LOCATION}${i}/" -P "${HTTPD_PATH}/httpboot/"
-done
-
-# Update grub.cfg to work with HTTP boot
-greenprint "📝 Update grub.cfg to work with HTTP boot"
-sudo tee -a "${GRUB_CFG}" > /dev/null << EOF
-menuentry 'Install CentOS Linux 8' --class fedora --class gnu-linux --class gnu --class os {
-        linuxefi /httpboot/images/pxeboot/vmlinuz inst.stage2=http://192.168.100.1/httpboot inst.ks=http://192.168.100.1/ks.cfg inst.text console=ttyS0,115200
-        initrdefi /httpboot/images/pxeboot/initrd.img
-}
-EOF
-sudo sed -i 's/default="1"/default="3"/' "${GRUB_CFG}"
-sudo sed -i 's/timeout=60/timeout=10/' "${GRUB_CFG}"
+HTTPD_PATH="/var/www/html"
 
 # Start httpd to serve ostree repo and HTTP boot server
 greenprint "🚀 Starting httpd daemon"
@@ -289,7 +254,7 @@ clean_up () {
     # Remove extracted upgrade image-tar.
     sudo rm -rf "$UPGRADE_PATH"
     # Remove "remote" repo.
-    sudo rm -rf "${HTTPD_PATH}"/{httpboot,repo,compose.json,ks.cfg}
+    sudo rm -rf "${HTTPD_PATH}"/{repo,compose.json}
     # Remomve tmp dir.
     sudo rm -rf "$TEMPDIR"
     # Stop httpd
@@ -407,9 +372,10 @@ sudo virt-install  --name="${IMAGE_KEY}"\
                    --vcpus 2 \
                    --network network=integration,mac=34:49:22:B0:83:30 \
                    --os-type linux \
-                   --os-variant ${OS_VARIANT} \
-                   --pxe \
-                   --boot uefi,loader_ro=yes,loader_type=pflash,nvram_template=/usr/share/edk2/ovmf/OVMF_VARS.fd,loader_secure=no \
+                   --os-variant "${OS_VARIANT}" \
+		   --location "${BOOT_LOCATION}" \
+		   --initrd-inject="${KS_FILE}" \
+		   --extra-args="ks=file:/ks.cfg console=ttyS0,115200" \
                    --nographics \
                    --noautoconsole \
                    --wait=-1 \
