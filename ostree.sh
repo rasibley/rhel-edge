@@ -149,6 +149,7 @@ sudo systemctl start httpd
 # SSH setup.
 SSH_OPTIONS=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5)
 SSH_KEY=key/ostree_key
+chmod 600 "$SSH_KEY"
 
 # Get the compose log.
 get_compose_log () {
