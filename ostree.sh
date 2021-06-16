@@ -289,6 +289,9 @@ groups = []
 [[packages]]
 name = "python36"
 version = "*"
+
+[customizations.services]
+enabled = [ "ostree-remount"]
 EOF
 
 # Build installation image.
@@ -418,6 +421,9 @@ version = "*"
 [[packages]]
 name = "wget"
 version = "*"
+
+[customizations.services]
+enabled = [ "ostree-remount"]
 EOF
 
 # Build upgrade image.
