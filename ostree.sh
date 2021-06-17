@@ -65,6 +65,8 @@ case "${ID}-${VERSION_ID}" in
         OS_VARIANT="rhel8-unknown"
         BOOT_LOCATION="http://mirror.centos.org/centos/8-stream/BaseOS/${ARCH}/os/"
         # CentOS Stream Workaround
+        sudo cp /etc/os-release files/
+        sudo cp /etc/redhat-release files/
         sudo cp files/rhel-8-4-0-os-release /etc/os-release
         sudo cp files/rhel-8-4-0-rh-release /etc/redhat-release
         sudo cp /usr/share/osbuild-composer/repositories/centos-stream-8.json /etc/osbuild-composer/repositories/
@@ -273,6 +275,11 @@ clean_up () {
     sudo rm -rf "$TEMPDIR"
     # Stop httpd
     sudo systemctl disable httpd --now
+    # Restore the *-release files
+    if [[ "$ID" == "centos" ]]; then
+        sudo cp files/os-release /etc/
+	sudo cp files/redhat-release /etc/
+    fi
 }
 
 # Test result checking
