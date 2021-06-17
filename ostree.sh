@@ -312,7 +312,7 @@ name = "python36"
 version = "*"
 
 [customizations.services]
-enabled = [ "ostree-remount"]
+enabled = [ "ostree-remount" ]
 EOF
 
 # Build installation image.
@@ -397,9 +397,9 @@ sudo virt-install  --name="${IMAGE_KEY}"\
                    --network network=integration,mac=34:49:22:B0:83:30 \
                    --os-type linux \
                    --os-variant "${OS_VARIANT}" \
-		   --location "${BOOT_LOCATION}" \
-		   --initrd-inject="${KS_FILE}" \
-		   --extra-args="ks=file:/ks.cfg console=ttyS0,115200" \
+                   --location "${BOOT_LOCATION}" \
+                   --initrd-inject="${KS_FILE}" \
+                   --extra-args="ks=file:/ks.cfg console=ttyS0,115200" \
                    --nographics \
                    --noautoconsole \
                    --wait=-1 \
@@ -444,7 +444,7 @@ name = "wget"
 version = "*"
 
 [customizations.services]
-enabled = [ "ostree-remount"]
+enabled = [ "ostree-remount" ]
 EOF
 
 # Build upgrade image.
