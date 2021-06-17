@@ -402,7 +402,6 @@ sudo virt-install  --name="${IMAGE_KEY}"\
                    --initrd-inject="${KS_FILE}" \
                    --extra-args="ks=file:/ks.cfg console=ttyS0,115200" \
                    --nographics \
-                   --noautoconsole \
                    --wait=-1 \
                    --noreboot
 
