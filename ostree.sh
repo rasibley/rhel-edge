@@ -48,7 +48,13 @@ sudo dnf install -y osbuild-composer \
 sudo rpm -qa | grep -i osbuild
 
 # Prepare osbuild-composer repository file
-sudo mkdir -p /etc/osbuild-composer/repositories
+if [ -d /etc/osbuild-composer/repositories  ]; then
+    # Clean previous runs repositories and cache
+    sudo rm -fr /etc/osbuild-composer/repositories/*
+    sudo rm -rf /var/cache/osbuild-composer/rpmmd/*
+else
+    sudo mkdir -p /etc/osbuild-composer/repositories
+fi
 
 # Set ostree ref. This need to be 'rhel/8/*/edge', because it's hardoded at the code
 OSTREE_REF="rhel/8/${ARCH}/edge"
@@ -80,7 +86,11 @@ case "${ID}-${VERSION_ID}" in
 esac
 
 # Start image builder service
-sudo systemctl enable --now osbuild-composer.socket
+if systemctl is-active osbuild-composer > /dev/null ; then
+    sudo systemctl restart osbuild-composer
+else
+    sudo systemctl enable --now osbuild-composer.socket
+fi
 
 # Start firewalld
 sudo systemctl enable --now firewalld
