@@ -50,11 +50,13 @@ sudo rpm -qa | grep -i osbuild
 # Prepare osbuild-composer repository file
 sudo mkdir -p /etc/osbuild-composer/repositories
 
+# Set ostree ref. This need to be 'rhel/8/*/edge', because it's hardoded at the code
+OSTREE_REF="rhel/8/${ARCH}/edge"
+
 # Set os-variant and boot location used by virt-install.
 case "${ID}-${VERSION_ID}" in
     "rhel-8.4")
         IMAGE_TYPE=rhel-edge-commit
-        OSTREE_REF="rhel/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
         BOOT_LOCATION="http://download-node-02.eng.bos.redhat.com/rhel-8/rel-eng/RHEL-8/latest-RHEL-8.4.0/compose/BaseOS/${ARCH}/os/"
         sudo cp files/rhel-8-4-0.json /etc/osbuild-composer/repositories/rhel-8-beta.json
@@ -62,7 +64,6 @@ case "${ID}-${VERSION_ID}" in
 	;;
     "centos-8")
         IMAGE_TYPE=rhel-edge-commit
-        OSTREE_REF="centos/8/${ARCH}/edge"
         OS_VARIANT="rhel8-unknown"
         BOOT_LOCATION="http://mirror.centos.org/centos/8-stream/BaseOS/${ARCH}/os/"
         # CentOS Stream Workaround
