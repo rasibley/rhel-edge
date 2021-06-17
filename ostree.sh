@@ -32,7 +32,18 @@ source /etc/os-release
 
 # Install packages
 sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-sudo dnf install -y --nogpgcheck osbuild-composer composer-cli ansible podman httpd wget firewalld
+sudo dnf install -y osbuild-composer \
+	            composer-cli \
+		    ansible \
+	            jq \
+		    httpd \
+		    qemu-img \
+		    qemu-kvm \
+		    libvirt-client \
+		    libvirt-daemon-kvm \
+		    virt-install \
+		    wget \
+		    firewalld
 sudo rpm -qa | grep -i osbuild
 
 # Prepare osbuild-composer repository file
