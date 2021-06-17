@@ -278,10 +278,6 @@ clean_up () {
     greenprint "🧼 Cleaning up"
     virsh destroy "${IMAGE_KEY}"
     virsh undefine "${IMAGE_KEY}" --nvram
-    # Don't remove qcow2 file, so it can be used later
-    #virsh vol-delete --pool images "${IMAGE_KEY}.qcow2"
-    # Remove extracted upgrade image-tar.
-    rm -rf "$UPGRADE_PATH"
     # Remove "remote" repo.
     rm -rf "${HTTPD_PATH}"/{repo,compose.json}
     # Remomve tmp dir.
