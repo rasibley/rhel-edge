@@ -11,6 +11,9 @@ USER=$(whoami)
 ARCH=$(uname -m)
 KERNEL=$(uname -r)
 
+# Get OS data.
+source /etc/os-release
+
 echo -e "\033[0;36m"
 cat << EOF
 ------------------------------------------------------------------------------
@@ -23,12 +26,10 @@ CI MACHINE SPECS
          DISK: ${DISK} GB
          ARCH: ${ARCH}
        KERNEL: ${KERNEL}
+           OS: ${ID}-${VERSION_ID}
 ------------------------------------------------------------------------------
 EOF
 echo -e "\033[0m"
-
-# Get OS data.
-source /etc/os-release
 
 # Install packages
 sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
